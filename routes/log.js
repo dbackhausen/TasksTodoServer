@@ -46,12 +46,23 @@ router.delete('/:id', function(req, res, next) {
 
 // ---
 
-/* POST /log/queries */
-router.post('/query', function(req, res, next) {
-  LogEntry.find({ 'taskId': req.body.taskId, 'key': req.body.key }, function (err, entries) {
+/* get /log/queries */
+router.post('/latestqueries', function(req, res, next) {
+  console.log(req.body);
+  LogEntry.find({ 
+    'action': "search",
+    '$and': [{
+      'parameters': { 
+        '$elemMatch': { key: "taskId", value: req.body.taskId }
+      }
+    },{
+      'parameters': { 
+        '$elemMatch': { key: "provider", value: req.body.provider }
+      }
+    }]}, function (err, entries) {
     if (err) return next(err);
     res.json(entries);
-  }).sort({created: -1}).limit(req.body.limit);
+  }).sort({created: -1});
 });
 
 /* GET /log/history/:taskId */

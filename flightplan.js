@@ -1,6 +1,6 @@
 var plan = require('flightplan');
 
-var appName = 'taskstodo-de';
+var appName = 'taskstodo';
 var username = 'deploy';
 var startFile = 'bin/www';
 
@@ -51,7 +51,7 @@ plan.remote(function(remote) {
   remote.sudo('npm --production --prefix ~/' + tmpDir + ' install ~/' + tmpDir, {user: username});
 
   remote.log('Reload application');
-  remote.sudo('ln -snf ~/' + tmpDir + ' ~/'+appName, {user: username});
-  remote.exec('sudo stop '+appName);  
-  remote.exec('sudo start '+appName);
+  remote.sudo('ln -snf ~/' + tmpDir + ' ~/' + appName, {user: username});
+  remote.exec('forever -o out.log -e err.log stop ' + appName + '/bin/www');  
+  remote.exec('forever -o out.log -e err.log start ' + appName + '/bin/www');  
 });

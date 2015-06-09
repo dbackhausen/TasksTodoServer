@@ -85,8 +85,8 @@ router.delete('/:id', function(req, res, next) {
 
 // --
 
-  var gridSchema = new mongoose.Schema({},{ strict: false });
-  var GridFS = mongoose.model("Grid", gridSchema, "fs.files" );
+var gridSchema = new mongoose.Schema({},{ strict: false });
+var GridFS = mongoose.model("Grid", gridSchema, "fs.files" );
   
 /* GET /attachments/task/:id */
 router.get('/task/:id', function(req, res, next) {
