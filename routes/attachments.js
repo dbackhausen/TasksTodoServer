@@ -19,7 +19,7 @@ var Attachment = require('../models/Attachment.js');
 //   });
 // });
 
-/* GET /attachments/id */
+/* GET /attachments/:id */
 router.get('/:id', function(req, res) {
   console.log("Requesting file with ID: " + req.params.id);
 
@@ -43,9 +43,8 @@ router.get('/:id', function(req, res) {
   });
 });
 
-/* POST /attachments */
+/* POST /attachments/:id */
 router.post('/:id', function(req, res) {
-  console.log("Task ID: " + req.params.id);
   var fileId = new mongoose.Types.ObjectId();
 
   var busboy = new Busboy({ headers: req.headers });
@@ -71,6 +70,38 @@ router.post('/:id', function(req, res) {
   });
 
   return req.pipe(busboy);
+});
+
+/* POST /attachments/link/:id */
+router.post('/link/:id/', function(req, res) {
+  console.log(" >> " + req.params.id + " " + req.body.url);
+
+  var request = require('request');
+
+  var reqx = request.get(req.body.url).on('response', function(resx) {
+    // extract filename
+    var filename = regexp.exec(resx.headers['content-disposition'])[1];
+
+    // create file write stream
+    var fileId = new mongoose.Types.ObjectId();
+    var writeStream = gfs.createWriteStream({
+      _id: fileId,
+      filename: filename,
+      mode: 'w',
+      content_type: resx.headers['content-type'],
+      metadata: {
+        taskId: req.params.id,
+        encoding: resx.headers['encoding']
+      }
+    });
+
+    // setup piping
+    resx.pipe(writeStream);
+
+    resx.on('end', function() {
+      // go on with processing
+    });
+  });
 });
 
 /* DELETE /attachments/:id */

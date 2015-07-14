@@ -46,9 +46,19 @@ router.delete('/:id', function(req, res, next) {
 
 // ---
 
-/* get /log/queries */
-router.post('/latestqueries', function(req, res, next) {
-  console.log(req.body);
+/* POST /log/latest/ */
+router.post('/latest/', function(req, res, next) {
+  var limit = req.body.limit;
+
+  //console.log(req.body);
+  LogEntry.find({ 'userId': req.body.userId, 'action': req.body.action }, function (err, entries) {
+    if (err) return next(err);
+    res.json(entries);
+  }).sort({created: -1}).limit((limit != null || limit != undefined) ? limit : 50);
+});
+
+/* POST /log/latest/queries */
+router.post('/latest/queries', function(req, res, next) {
   LogEntry.find({ 
     'action': "search",
     '$and': [{
@@ -59,7 +69,8 @@ router.post('/latestqueries', function(req, res, next) {
       'parameters': { 
         '$elemMatch': { key: "provider", value: req.body.provider }
       }
-    }]}, function (err, entries) {
+    }]
+  }, function (err, entries) {
     if (err) return next(err);
     res.json(entries);
   }).sort({created: -1});
@@ -73,12 +84,12 @@ router.get('/history/:taskId', function(req, res, next) {
   }).sort({created: -1}).limit(30);
 });
 
-/* GET /log/latest/:key */
-router.get('/user/:userId/latest/:key', function(req, res, next) {
-  LogEntry.find({ 'userId': req.params.userId, 'key': req.params.key }, function (err, entries) {
+/* GET /log/tabs/:taskId */
+router.get('/tabs/:taskId', function(req, res, next) {
+  LogEntry.find( { action: "save_tab", parameters: { $elemMatch: { value: "taskId", value: req.params.taskId }}}, function (err, entries) {
     if (err) return next(err);
     res.json(entries);
-  }).sort({created: -1}).limit(1);
+  }).sort({created: -1});
 });
 
 module.exports = router;

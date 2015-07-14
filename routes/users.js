@@ -5,12 +5,12 @@ var mongoose = require('mongoose');
 var User = require('../models/User.js');
 
 /* GET /users listing. */
-router.get('/', function(req, res, next) {
+/*router.get('/', function(req, res, next) {
   User.find(function (err, users) {
     if (err) return next(err);
     res.json(users);
   });
-});
+});*/
 
 /* GET /users/:id */
 router.get('/:id', function(req, res, next) {
@@ -50,7 +50,12 @@ router.delete('/:id', function(req, res, next) {
 router.post('/login', function(req, res, next) {
   User.find({ 'username': req.body.username, 'password': req.body.password }, function (err, user) {
     if (err) return next(err);
-    res.json(user);
+
+    if (user[0] != null) {
+      res.json(user);
+    } else {
+      res.send(404);
+    }
   });
 });
 

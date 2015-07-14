@@ -52,6 +52,6 @@ plan.remote(function(remote) {
 
   remote.log('Reload application');
   remote.sudo('ln -snf ~/' + tmpDir + ' ~/' + appName, {user: username});
-  remote.exec('forever -o out.log -e err.log stop ' + appName + '/bin/www');  
-  remote.exec('forever -o out.log -e err.log start ' + appName + '/bin/www');  
+  remote.exec('rm -f /home/deploy/.forever/forever.log');  
+  remote.exec('cd /home/deploy/taskstodo && forever -d -l forever.log -o console.log -e error.log start bin/www');
 });
