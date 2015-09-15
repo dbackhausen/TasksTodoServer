@@ -4,101 +4,154 @@ var router = express.Router();
 var mongoose = require('mongoose');
 var LogEntry = require('../models/LogEntry.js');
 
-/* GET /log listing. */
-router.get('/user/:userId', function(req, res, next) {
-  LogEntry.find({ 'userId': req.params.userId, options: { sort: { created: 1 }}}, function (err, entries) {
-    if (err) return next(err);
-    res.json(entries);
-  }).sort({created: -1});
-});
+var log = {
+  getAll: function(req, res) {
+    var query = new mongoose.Query;
+  
+    // Optional parameters
+    var pUserId = req.query.userId;
+    var pTaskId = req.query.taskId;
+    var pAction = req.query.action;
+    var pKey = req.query.key;
+    var pValue = req.query.value;
 
-/* GET /log/:id */
-router.get('/:id', function(req, res, next) {
-  LogEntry.findById(req.params.id, function (err, post) {
-    if (err) return next(err);
-    res.json(post);
-  });
-});
+    var pSkip = req.query.skip;
+    var pLimit = req.query.limit;
+    var pSort = req.query.sort;
+    var pDirection = req.query.direction;
 
-/* POST /log */
-router.post('/', function(req, res, next) {
-  LogEntry.create(req.body, function (err, post) {
-    if (err) return next(err);
-    res.json(post);
-  });
-});
+    if (pUserId && pUserId !== "" ) {
+      query.where('userId', pUserId);
+    }
 
-/* PUT /log/:id */
-router.put('/:id', function(req, res, next) {
-  LogEntry.findByIdAndUpdate(req.params.id, req.body, function (err, post) {
-    if (err) return next(err);
-    res.json(post);
-  });
-});
+    if (pAction && pAction !== "" && pAction !== undefined) {
+      query.where('action', pAction);
+    }
 
-/* DELETE /log/:id */
-router.delete('/:id', function(req, res, next) {
-  LogEntry.findByIdAndRemove(req.params.id, function (err, post) {
-    if (err) return next(err);
-    res.json(post);
-  });
-});
+    if (pKey && pValue && pKey !== "" && pValue !== "") {
+      query.elemMatch('parameters', { key: pKey, value: pValue });
+    } 
 
-// ---
+    if (pTaskId && pTaskId !== "" && pTaskId !== undefined) {
+      query.elemMatch('parameters', { key: 'taskId', value: pTaskId });
+    }
 
-/* POST /log/latest/ */
-router.post('/latest/', function(req, res, next) {
-  var limit = req.body.limit;
+    if (pLimit && !isNaN(parseInt(pLimit)) && isFinite(pLimit)) {
+      query.limit(pLimit)
+    }
 
-  //console.log(req.body);
-  LogEntry.find({ 'userId': req.body.userId, 'action': req.body.action }, function (err, entries) {
-    if (err) return next(err);
-    res.json(entries);
-  }).sort({created: -1}).limit((limit != null || limit != undefined) ? limit : 50);
-});
+    if (pSkip && !isNaN(parseInt(pSkip)) && isFinite(pSkip)) {
+      query.skip(pSkip);
+    }
 
-/* GET /log/queries/:taskId */
-router.get('/queries/:taskId', function(req, res, next) {
-  LogEntry.find({ action: "search_executed", parameters: { $elemMatch: { value: "taskId", value: req.params.taskId }}}, function (err, entries) {
-    if (err) return next(err);
-    res.json(entries);
-  }).sort({created: -1});
-});
+    if (!pSort || !pDirection || !pSort === undefined || !pDirection === undefined ) {
+      query.sort({'created': -1});
+    } else {
+      var direction = pDirection == "DESC" ? -1 : 1;
+      query.sort({pSort: direction});
+    }
 
-/* POST /log/queries/latest/ */
-router.post('/queries/latest', function(req, res, next) {
-  LogEntry.find({ 
-    'action': "search_executed",
-    '$and': [{
-      'parameters': { 
-        '$elemMatch': { key: "taskId", value: req.body.taskId }
+    LogEntry.find(query, function (err, entries) {
+      if (err) {
+        res.status(500);
+        res.json({
+          "message": err
+        });
+      } else {
+        res.json(entries);
       }
-    },{
-      'parameters': { 
-        '$elemMatch': { key: "provider", value: req.body.provider }
+    });
+  },
+ 
+  getOne: function(req, res) {
+    LogEntry.findById(req.params.id, function (err, entry) {
+      if (err) {
+        res.status(500);
+        res.json({
+          "message": err
+        });
+      } else {
+        res.json(entry);
       }
-    }]
-  }, function (err, entries) {
-    if (err) return next(err);
-    console.log(entries);
-    res.json(entries);
-  }).sort({created: -1}).limit(5);
-});
+    });
+  },
+ 
+  create: function(req, res) {
+    LogEntry.create(req.body, function (err, post) {
+      if (err) {
+        res.status(500);
+        res.json({
+          "message": err
+        });
+      } else {
+        res.json(post);
+      }
+    });
+  },
+ 
+  update: function(req, res) {
+    if (req.body._id) {
+      LogEntry.findByIdAndUpdate(req.body._id, req.body, function (err, post) {
+        if (err) {
+          res.status(500);
+          res.json({
+            "message": err
+          });
+        } else {
+          res.json(post);
+        }
+      });
+    } else {
+      res.status(400);
+    }
+  },
+ 
+  delete: function(req, res) {
+    LogEntry.findByIdAndRemove(req.params.id, req.body, function (err, data) {
+      if (err) {
+        res.status(500);
+        res.json({
+          "message": err
+        });
+      } else {
+        res.status(204);
+        res.json(true);
+      }
+    });
+  },
+  
+  clear: function(req, res) {
+    var query = new mongoose.Query;
+  
+    // Optional parameters
+    var pUserId = req.query.userId;
+    var pTaskId = req.query.taskId;
+    var pAction = req.query.action;
+    
+    if (pUserId && pUserId !== "" ) {
+      query.where('userId', pUserId);
+    }
+    
+    if (pTaskId && pTaskId !== "") {
+      query.elemMatch('parameters', { key: 'taskId', value: pTaskId });
+    }
 
-/* GET /log/history/:taskId */
-router.get('/history/:taskId', function(req, res, next) {
-  LogEntry.find( { action: "location_change", parameters: { $elemMatch: { value: "taskId", value: req.params.taskId }}}, function (err, entries) {
-    if (err) return next(err);
-    res.json(entries);
-  }).sort({created: -1}).limit(50);
-});
+    if (pAction && pAction !== "" ) {
+      query.where('action', pAction);
+    }
+    
+    LogEntry.remove(query, function (err, data) {
+      if (err) {
+        res.status(500);
+        res.json({
+          "message": err
+        });
+      } else {
+        res.status(204);
+        res.json(true);
+      }
+    });
+  }
+};
 
-/* GET /log/tabs/:taskId */
-router.get('/tabs/:taskId', function(req, res, next) {
-  LogEntry.find( { action: "tab_stored", parameters: { $elemMatch: { value: "taskId", value: req.params.taskId }}}, function (err, entries) {
-    if (err) return next(err);
-    res.json(entries);
-  }).sort({created: -1});
-});
-
-module.exports = router;
+module.exports = log;

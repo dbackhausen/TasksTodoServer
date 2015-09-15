@@ -4,54 +4,89 @@ var router = express.Router();
 var mongoose = require('mongoose');
 var Bookmark = require('../models/Bookmark.js');
 
-/* GET /bookmarks listing. */
-router.get('/', function(req, res, next) {
-  Bookmark.find(function (err, bookmarks) {
-    if (err) return next(err);
-    res.json(bookmarks);
-  });
-});
+var bookmarks = {
+  getAll: function(req, res) {
+    var pUserId = req.query.userId;
+    var pTaskId = req.query.taskId;
+  
+    var query = new mongoose.Query;
 
-/* GET /bookmarks/id */
-router.get('/:id', function(req, res, next) {
-  Bookmark.findById(req.params.id, function (err, post) {
-    if (err) return next(err);
-    res.json(post);
-  });
-});
+    if (pUserId && pUserId !== "" ) {
+      query.where('userId', pUserId);
+    }
 
-/* POST /bookmarks */
-router.post('/', function(req, res, next) {
-  Bookmark.create(req.body, function (err, post) {
-    if (err) return next(err);
-    res.json(post);
-  });
-});
+    if (pTaskId && pTaskId !== "" ) {
+      query.where('taskId', pTaskId);
+    }
 
-/* PUT /bookmarks/:id */
-router.put('/:id', function(req, res, next) {
-  Bookmark.findByIdAndUpdate(req.params.id, req.body, function (err, post) {
-    if (err) return next(err);
-    res.json(post);
-  });
-});
+    Bookmark.find(query, function (err, entries) {
+      if (err) {
+        res.status(500);
+        res.json({
+          "message": err
+        });
+      } else {
+        res.json(entries);
+      }
+    }).sort({'created': -1});
+  },
+ 
+  getOne: function(req, res) {
+    Bookmark.findById(req.params.id, function (err, entry) {
+      if (err) {
+        res.status(500);
+        res.json({
+          "message": err
+        });
+      } else {
+        res.json(entry);
+      }
+    });
+  },
+ 
+  create: function(req, res) {
+    Bookmark.create(req.body, function (err, post) {
+      if (err) {
+        res.status(500);
+        res.json({
+          "message": err
+        });
+      } else {
+        res.json(post);
+      }
+    });
+  },
+ 
+  update: function(req, res) {
+    if (req.body._id) {
+      Bookmark.findByIdAndUpdate(req.body._id, req.body, function (err, post) {
+        if (err) {
+          res.status(500);
+          res.json({
+            "message": err
+          });
+        } else {
+          res.json(post);
+        }
+      });
+    } else {
+      res.status(400);
+    }
+  },
+ 
+  delete: function(req, res) {
+    Bookmark.findByIdAndRemove(req.params.id, req.body, function (err, data) {
+      if (err) {
+        res.status(500);
+        res.json({
+          "message": err
+        });
+      } else {
+        res.status(204);
+        res.json(true);
+      }
+    });
+  }
+};
 
-/* DELETE /bookmarks/:id */
-router.delete('/:id', function(req, res, next) {
-  Bookmark.findByIdAndRemove(req.params.id, req.body, function (err, post) {
-    if (err) return next(err);
-    res.json(post);
-  });
-});
-
-// --
-
-/* GET /bookmarks/task/:id */
-router.get('/task/:id', function(req, res, next) {
-  Bookmark.find({ 'taskId': req.params.id, 'deleted': { $exists: false }}, function (err, entries) {
-    if (err) return next(err);
-    res.json(entries);
-  }).sort({'created': -1});
-});
-
-module.exports = router;
+module.exports = bookmarks;

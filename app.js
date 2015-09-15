@@ -8,17 +8,6 @@ var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost/TasksTodo');
 
-var routes = require('./routes/index');
-
-var users = require('./routes/users');
-var goals = require('./routes/goals');
-var tasks = require('./routes/tasks');
-var notes = require('./routes/notes');
-var bookmarks = require('./routes/bookmarks');
-var history = require('./routes/history');
-var log = require('./routes/log');
-var attachments = require('./routes/attachments');
-
 var app = express();
 
 // view engine setup
@@ -34,15 +23,8 @@ app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+var routes = require('./routes/index');
 app.use('/', routes);
-app.use('/users', users);
-app.use('/goals', goals);
-app.use('/tasks', tasks);
-app.use('/notes', notes);
-app.use('/bookmarks', bookmarks);
-app.use('/history', history);
-app.use('/log', log);
-app.use('/attachments', attachments);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -51,7 +33,7 @@ app.use(function(req, res, next) {
     next(err);
 });
 
-// error handlers
+// ERROR HANDLERS
 
 // development error handler
 // will print stacktrace
