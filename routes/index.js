@@ -44,7 +44,7 @@ router.get('/api/v1/log/:id', log.getOne);
 router.post('/api/v1/log', log.create);
 router.put('/api/v1/log', log.update);
 router.delete('/api/v1/log/:id', log.delete);
-router.delete('/api/v1/log/clear', log.clear);
+router.delete('/api/v1/clear/log', log.clear);
 
 var attachments = require('./attachments');
 router.get('/api/v1/attachment', attachments.getAll);

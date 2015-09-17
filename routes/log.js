@@ -77,6 +77,7 @@ var log = {
   },
  
   create: function(req, res) {
+   // console.log(req.body);
     LogEntry.create(req.body, function (err, post) {
       if (err) {
         res.status(500);
@@ -122,24 +123,25 @@ var log = {
   
   clear: function(req, res) {
     var query = new mongoose.Query;
-  
+      
     // Optional parameters
     var pUserId = req.query.userId;
     var pTaskId = req.query.taskId;
     var pAction = req.query.action;
     
-    if (pUserId && pUserId !== "" ) {
+    
+    if (pUserId) {
       query.where('userId', pUserId);
     }
     
-    if (pTaskId && pTaskId !== "") {
-      query.elemMatch('parameters', { key: 'taskId', value: pTaskId });
+    if (pTaskId) {
+      query.elemMatch('parameters', {key: 'taskId', value: pTaskId});
     }
 
-    if (pAction && pAction !== "" ) {
+    if (pAction) {
       query.where('action', pAction);
     }
-    
+
     LogEntry.remove(query, function (err, data) {
       if (err) {
         res.status(500);

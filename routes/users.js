@@ -30,16 +30,39 @@ var users = {
   },
  
   create: function(req, res) {
-    User.create(req.body, function (err, post) {
-      if (err) {
-        res.status(500);
-        res.json({
-          "message": err
-        });
-      } else {
-        res.json(post);
-      }
-    });
+    if (req.body && req.body.username) {
+      User.find({ 'username': req.body.username.toLowerCase() }, function (err, user) {
+        if (err) {
+          res.status(500);
+          res.json({
+            "message": err
+          });
+        } else {
+          if (user[0] !== null && user[0] !== undefined) {
+            res.status(409);
+            res.json({
+              "message": "User with " + req.body.username.toLowerCase() + " already exists!"
+            });
+          } else {
+            User.create(req.body, function (err, post) {
+              if (err) {
+                res.status(500);
+                res.json({
+                  "message": err
+                });
+              } else {
+                res.json(post);
+              }
+            });
+          }
+        }
+      });
+    } else {
+      res.status(400);
+      res.json({
+        "message": "Invalid request!"
+      });
+    }
   },
  
   update: function(req, res) {
@@ -73,7 +96,7 @@ var users = {
     });
   },
   
-  login: function(req, res) {
+  login: function(req, res) {  
     User.find({ 'username': req.body.username, 'password': req.body.password }, function (err, user) {
       if (err) {
         res.status(500);
